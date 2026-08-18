@@ -10,14 +10,14 @@ command = "worker-build --release"
 [[d1_databases]]
 binding = "DB"
 database_name = "health-service"
-database_id = "PLACEHOLDER-run-wrangler-d1-create"
+database_id = "9ec80f6c-8a94-4c51-8f2d-661bcf1bed3a"
 
 # What to probe, owned elsewhere and only read here. See
 # migrations/config/001_targets.sql for the shape this service expects.
 [[d1_databases]]
 binding = "CONFIG"
 database_name = "status-config"
-database_id = "PLACEHOLDER-the-configuration-database"
+database_id = "bdef00c4-c166-4d89-870f-ccb1ecb545bc"
 
 # Every five minutes each target is probed once. See the scheduled event in
 # src/lib.rs; Cloudflare allows 50 subrequests per invocation on the free
