@@ -113,16 +113,6 @@ h1 {
 .bar.up { background: var(--up); }
 .bar.down { background: var(--down); }
 
-.foot {
-    margin-top: 2.5rem;
-    color: var(--muted);
-    font-size: 0.85rem;
-}
-
-.foot a {
-    color: inherit;
-}
-
 @media (prefers-color-scheme: dark) {
     :root {
         --ink: #e7e9ee;

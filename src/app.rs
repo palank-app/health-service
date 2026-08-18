@@ -119,10 +119,6 @@ async fn status(_cx: &Cx) -> Result {
                             </li>
                         }
                     </ul>
-
-                    <p class="foot">
-                        "Sondé toutes les cinq minutes depuis le réseau Cloudflare."
-                    </p>
                 </main>
             </body>
         </html>
