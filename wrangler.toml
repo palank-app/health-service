@@ -1,0 +1,43 @@
+name = "health-service"
+main = "build/worker/shim.mjs"
+compatibility_date = "2026-08-01"
+
+[build]
+command = "worker-build --release"
+
+# What the probes produced. Create it once with
+# `wrangler d1 create health-service`, then paste the id here.
+[[d1_databases]]
+binding = "DB"
+database_name = "health-service"
+database_id = "PLACEHOLDER-run-wrangler-d1-create"
+
+# What to probe, owned elsewhere and only read here. See
+# migrations/config/001_targets.sql for the shape this service expects.
+[[d1_databases]]
+binding = "CONFIG"
+database_name = "status-config"
+database_id = "PLACEHOLDER-the-configuration-database"
+
+# Every five minutes each target is probed once. See the scheduled event in
+# src/lib.rs; Cloudflare allows 50 subrequests per invocation on the free
+# plan, which is the ceiling on how many targets one sweep can carry.
+[triggers]
+crons = ["*/5 * * * *"]
+
+# What the page calls itself.
+[vars]
+SITE_NAME = "État des services"
+
+# The stylesheet. A request matching a file here never reaches the Worker.
+[assets]
+directory = "public"
+
+[observability]
+enabled = false
+
+[observability.logs]
+enabled = true
+head_sampling_rate = 1
+persist = true
+invocation_logs = true

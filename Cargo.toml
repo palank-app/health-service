@@ -1,0 +1,36 @@
+[package]
+name = "health-service"
+version = "0.1.0"
+edition = "2024"
+description = "A public status page probed from a Cloudflare Worker"
+
+# A Worker and nothing else: the pages, the prober and the store all live in
+# one wasm module, so there is no server to run and no host to keep alive.
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# Topcoat without `serve`: the Worker answers, the router only renders.
+# `tailwind` and `font-fontsource` pull in ring, which has no wasm target,
+# so the stylesheet is a plain file under public/.
+topcoat = { version = "0.6.0", default-features = false, features = [
+    "router",
+    "view",
+    "runtime",
+    "asset",
+    "discover",
+] }
+worker = { version = "0.8", features = ["d1"] }
+chrono = { version = "0.4", features = ["serde", "wasmbind"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+anyhow = "1"
+http = "1"
+http-body-util = "0.1"
+console_error_panic_hook = "0.1"
+wasm-bindgen-futures = "0.4"
+futures-channel = "0.3"
+
+[profile.release]
+opt-level = "s"
+lto = true
