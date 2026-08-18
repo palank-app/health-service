@@ -3,6 +3,7 @@
 //! the scheduled event, never by a page.
 
 use chrono::Utc;
+use worker::console_log;
 use worker::js_sys::Date;
 use worker::SendEmail;
 
@@ -46,10 +47,14 @@ pub async fn sweep(
             _ => None,
         };
 
+        // A refused email must not cost the rest of the sweep: the point
+        // of the pass is the record, the announcement is a courtesy.
         if let (Some(change), Some((from, to)), Some(binding)) =
             (change, settings.alert_addresses(), email)
         {
-            alert::send(binding, from, to, change).await?;
+            if let Err(e) = alert::send(binding, from, to, change).await {
+                console_log!("alert for {}: {e}", target.slug);
+            }
         }
     }
 
