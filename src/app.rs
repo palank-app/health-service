@@ -110,9 +110,6 @@ async fn status(_cx: &Cx) -> Result {
                                         if let Some(uptime) = row.uptime() {
                                             (format!("{uptime:.1} %"))
                                         }
-                                        if let Some(latency) = row.latency() {
-                                            " · " (format!("{latency} ms"))
-                                        }
                                     </span>
                                 </div>
                                 strip(checks: row.checks)
