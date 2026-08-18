@@ -121,8 +121,7 @@ async fn status(_cx: &Cx) -> Result {
                     </ul>
 
                     <p class="foot">
-                        "Sondé toutes les cinq minutes depuis le réseau Cloudflare. "
-                        <a href="/api/status">"Même chose en JSON"</a> "."
+                        "Sondé toutes les cinq minutes depuis le réseau Cloudflare."
                     </p>
                 </main>
             </body>
