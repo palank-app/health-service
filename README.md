@@ -56,11 +56,22 @@ Cloudflare runs the sweep every five minutes.
 
 ## Alerts
 
-A target that changes state — up to down, or back — sends one email, once.
-A service down since yesterday stays quiet, and a target probed for the
+A target that changes state — up to down, or back — is announced once. A
+service down since yesterday stays quiet, and a target probed for the
 first time announces nothing.
 
-Three rows in `settings` drive it, and nothing else:
+Two channels, either or both, and neither is required.
+
+**A webhook**, in the payload shape Slack introduced and Mattermost,
+Rocket.Chat and others accept unchanged. The URL is a credential — anyone
+holding it can post to the channel — so it lives as a secret rather than
+in the settings table:
+
+```sh
+wrangler secret put ALERT_WEBHOOK
+```
+
+**Email**, through the `EMAIL` binding. It asks more of you:
 
 ```sql
 update settings set value = '1'                   where key = 'email_alerts_enabled';
@@ -68,9 +79,13 @@ update settings set value = 'status@example.com'  where key = 'email_alert_sende
 update settings set value = 'ops@example.com'     where key = 'email_alert_recipient';
 ```
 
-Cloudflare accepts a sender only on a domain the account routes email for,
-and a recipient it has verified. With either address empty, or the flag
-off, the sweep records as usual and says nothing.
+- **Sending email from a Worker needs a paid Workers plan.** On the free
+  plan the binding is refused and the sweep logs the refusal.
+- Cloudflare accepts a sender only on a domain the account routes email
+  for, and a recipient it has verified.
+
+With no channel configured the sweep records its probes and says so once
+in the log.
 
 ## Choices worth knowing
 

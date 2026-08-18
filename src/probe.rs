@@ -5,20 +5,16 @@
 use chrono::Utc;
 use worker::console_log;
 use worker::js_sys::Date;
-use worker::SendEmail;
 
-use crate::alert::{self, Change};
-use crate::db::{self, Settings};
+use crate::alert::{Announcer, Change};
+use crate::db;
 
 /// Fetches every target and records the outcome. Returns how many answered
 /// as expected, out of how many were probed.
 ///
 /// There is no timeout of our own: the platform cuts a subrequest that
 /// hangs, and a probe cut that way is recorded as down like any other.
-pub async fn sweep(
-    settings: &Settings,
-    email: Option<&SendEmail>,
-) -> Result<(u32, u32), db::Error> {
+pub async fn sweep(announcer: &Announcer) -> Result<(u32, u32), db::Error> {
     let targets = db::targets().await?;
     let at = Utc::now().to_rfc3339();
     let mut healthy = 0;
@@ -47,13 +43,11 @@ pub async fn sweep(
             _ => None,
         };
 
-        // A refused email must not cost the rest of the sweep: the point
-        // of the pass is the record, the announcement is a courtesy.
-        if let (Some(change), Some((from, to)), Some(binding)) =
-            (change, settings.alert_addresses(), email)
-        {
-            if let Err(e) = alert::send(binding, from, to, change).await {
-                console_log!("alert for {}: {e}", target.slug);
+        // A refused announcement must not cost the rest of the sweep: the
+        // point of the pass is the record, the announcement is a courtesy.
+        if let Some(change) = change {
+            for failure in announcer.announce(&change).await {
+                console_log!("alert for {}: {failure}", target.slug);
             }
         }
     }

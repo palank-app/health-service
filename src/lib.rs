@@ -69,11 +69,12 @@ async fn tick(event: ScheduledEvent, env: Env, _ctx: ScheduleContext) {
             return;
         }
     };
-    // An absent binding is not a failure: a deployment that never wants an
-    // email simply does not declare one.
-    let email = env.send_email("EMAIL").ok();
+    let announcer = alert::Announcer::new(&env, &settings);
+    if announcer.is_silent() {
+        console_log!("cron {}: no channel configured, recording only", event.cron());
+    }
 
-    match probe::sweep(&settings, email.as_ref()).await {
+    match probe::sweep(&announcer).await {
         Ok((healthy, probed)) => console_log!("cron {}: {healthy}/{probed} up", event.cron()),
         Err(e) => console_log!("cron {}: sweep failed: {e}", event.cron()),
     }
