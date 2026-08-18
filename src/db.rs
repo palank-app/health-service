@@ -172,26 +172,6 @@ pub fn history_of(
     })
 }
 
-/// Whether the last probe of a target answered as expected, or nothing
-/// when it has never been probed.
-pub fn last_state(slug: &str) -> impl std::future::Future<Output = Result<Option<bool>, Error>> + Send {
-    let args = vec![s(slug)];
-    bridge(async move {
-        #[derive(Deserialize)]
-        struct Row {
-            ok: i64,
-        }
-        let found: Option<Row> = history()
-            .prepare("select ok from checks where slug = ?1 order by at desc limit 1")
-            .bind(&args)
-            .map_err(err)?
-            .first(None)
-            .await
-            .map_err(err)?;
-        Ok(found.map(|row| row.ok == 1))
-    })
-}
-
 /// Writes one probe.
 pub fn record(
     slug: &str,

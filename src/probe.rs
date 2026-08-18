@@ -21,25 +21,38 @@ pub async fn sweep(announcer: &Announcer) -> Result<(u32, u32), db::Error> {
     let mut probed = 0;
 
     for target in targets {
-        probed += 1;
-        let before = db::last_state(&target.slug).await?;
+        // One target's database trouble must not cost the others their probe.
+        let recent = match db::history_of(&target.slug, 2).await {
+            Ok(checks) => checks.iter().map(|check| check.ok == 1).collect::<Vec<bool>>(),
+            Err(e) => {
+                console_log!("state of {}: {e}", target.slug);
+                continue;
+            }
+        };
 
         let started = Date::now();
         let status = fetch_status(&target.url).await;
         let latency_ms = (Date::now() - started).round() as i64;
 
         let ok = status == Some(target.expects);
+        probed += 1;
         healthy += u32::from(ok);
-        db::record(&target.slug, &at, status, latency_ms, ok).await?;
 
-        // Only a change is worth an email: a service down since yesterday
-        // should not write every five minutes. A target probed for the
-        // first time announces nothing either.
-        let change = match (before, ok) {
-            (Some(true), false) => {
+        if let Err(e) = db::record(&target.slug, &at, status, latency_ms, ok).await {
+            console_log!("record for {}: {e}", target.slug);
+            continue;
+        }
+
+        // Two consecutive failures before anything is said: a single
+        // unreachable probe is usually the network. Recovery closes such a
+        // run and only such a run, so a blip stays quiet in both directions.
+        let change = match (recent.as_slice(), ok) {
+            ([false, true], false) => {
                 Some(Change::Down { name: &target.name, url: &target.url, status })
             }
-            (Some(false), true) => Some(Change::Recovered { name: &target.name, url: &target.url }),
+            ([false, false], true) => {
+                Some(Change::Recovered { name: &target.name, url: &target.url })
+            }
             _ => None,
         };
 
