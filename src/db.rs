@@ -1,6 +1,6 @@
-//! What the Worker's environment hands over: `CONFIG` says what to watch,
-//! `DB` keeps what watching produced, and `SITE_NAME` is what the page
-//! calls itself. Both stores are D1, spoken to through the bindings.
+//! The two stores: `CONFIG` says what to watch and what the page calls
+//! itself, `DB` keeps what watching produced. Both are D1, spoken to
+//! through the Worker bindings.
 //!
 //! The handles live in thread_locals because wasm has one thread and D1 is
 //! not Send, while the router's handlers must be. Every call therefore runs
@@ -37,7 +37,6 @@ pub struct Check {
 thread_local! {
     static HISTORY: RefCell<Option<Rc<D1Database>>> = const { RefCell::new(None) };
     static CONFIG: RefCell<Option<Rc<D1Database>>> = const { RefCell::new(None) };
-    static NAME: RefCell<Option<String>> = const { RefCell::new(None) };
 }
 
 pub fn install(env: &worker::Env) -> Result<(), Error> {
@@ -45,15 +44,23 @@ pub fn install(env: &worker::Env) -> Result<(), Error> {
     let config = env.d1("CONFIG").map_err(|e| anyhow::anyhow!("CONFIG binding: {e}"))?;
     HISTORY.with(|cell| *cell.borrow_mut() = Some(Rc::new(history)));
     CONFIG.with(|cell| *cell.borrow_mut() = Some(Rc::new(config)));
-    NAME.with(|cell| {
-        *cell.borrow_mut() = env.var("SITE_NAME").ok().map(|value| value.to_string());
-    });
     Ok(())
 }
 
-/// What the page calls itself, from the `SITE_NAME` var.
-pub fn site_name() -> String {
-    NAME.with(|cell| cell.borrow().clone()).unwrap_or_else(|| "État des services".to_string())
+/// What the page calls itself, from the configuration database.
+pub fn site_name() -> impl std::future::Future<Output = Result<String, Error>> + Send {
+    bridge(async move {
+        #[derive(Deserialize)]
+        struct Row {
+            value: String,
+        }
+        let found: Option<Row> = config()
+            .prepare("select value from settings where key = 'site_name'")
+            .first(None)
+            .await
+            .map_err(err)?;
+        Ok(found.map_or_else(|| "État des services".to_string(), |row| row.value))
+    })
 }
 
 fn history() -> Rc<D1Database> {

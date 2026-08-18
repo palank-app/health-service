@@ -26,19 +26,21 @@ database_id = "a9e3c451-8a96-4b01-8697-1a5d01a54e19"
 [triggers]
 crons = ["*/5 * * * *"]
 
-# What the page calls itself.
-[vars]
-SITE_NAME = "État des services"
-
 # The stylesheet. A request matching a file here never reaches the Worker.
 [assets]
 directory = "public"
 
 [observability]
-enabled = false
+enabled = true
+head_sampling_rate = 1
 
 [observability.logs]
 enabled = true
 head_sampling_rate = 1
 persist = true
 invocation_logs = true
+
+[observability.traces]
+enabled = false
+persist = true
+head_sampling_rate = 1
