@@ -1,5 +1,6 @@
-name = "health-service"
+name = "status"
 main = "build/worker/shim.mjs"
+account_id = "a2a3cd99709f9962a86d9a5de91dee0b"
 compatibility_date = "2026-08-01"
 
 [build]
@@ -10,14 +11,14 @@ command = "worker-build --release"
 [[d1_databases]]
 binding = "DB"
 database_name = "health-service"
-database_id = "9ec80f6c-8a94-4c51-8f2d-661bcf1bed3a"
+database_id = "239b6f0a-b653-4690-81a9-d80fd5b9330d"
 
 # What to probe, owned elsewhere and only read here. See
 # migrations/config/001_targets.sql for the shape this service expects.
 [[d1_databases]]
 binding = "CONFIG"
 database_name = "status-config"
-database_id = "bdef00c4-c166-4d89-870f-ccb1ecb545bc"
+database_id = "a9e3c451-8a96-4b01-8697-1a5d01a54e19"
 
 # Every five minutes each target is probed once. See the scheduled event in
 # src/lib.rs; Cloudflare allows 50 subrequests per invocation on the free
