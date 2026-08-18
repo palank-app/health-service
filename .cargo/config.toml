@@ -1,0 +1,5 @@
+# chrono-tz compiles in every zone of the IANA database unless told which one
+# to keep; the rest is a megabyte of wasm to fetch and parse on a cold start.
+# Only has an effect together with the crate's `filter-by-regex` feature.
+[env]
+CHRONO_TZ_TIMEZONE_FILTER = "Europe/Paris"

@@ -93,16 +93,20 @@ h1 {
 }
 
 /* One bar per probe, oldest on the left. The strip scrolls rather than
-   squeezing: a bar thinner than a pixel says nothing. */
+   squeezing: a bar thinner than a pixel says nothing. Scrolling also clips,
+   so the bubble's room has to be padding inside the strip; the negative
+   margin gives that room back to the layout. */
 .strip {
     display: flex;
     gap: 2px;
-    margin-top: 0.7rem;
+    margin-top: -1rem;
+    padding-top: 1.7rem;
     overflow-x: auto;
     padding-bottom: 2px;
 }
 
 .bar {
+    position: relative;
     width: 4px;
     height: 1.9rem;
     border-radius: 2px;
@@ -112,6 +116,44 @@ h1 {
 
 .bar.up { background: var(--up); }
 .bar.down { background: var(--down); }
+
+.tip {
+    position: absolute;
+    bottom: calc(100% + 0.3rem);
+    left: 50%;
+    transform: translateX(-50%);
+    display: none;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.15rem 0.4rem;
+    border-radius: 0.3rem;
+    background: var(--ink);
+    color: var(--ground);
+    font-size: 0.7rem;
+    line-height: 1.4;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.bar:hover .tip { display: flex; }
+
+.tip::before {
+    content: "";
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 50%;
+    background: var(--unknown);
+    flex: none;
+}
+
+.bar.up .tip::before { background: var(--up); }
+.bar.down .tip::before { background: var(--down); }
+
+/* At either end of the strip a centred bubble would be clipped, so it hangs
+   from the near edge instead of straddling its bar. */
+.bar:nth-child(-n+6) .tip { left: 0; transform: none; }
+.bar:nth-last-child(-n+6) .tip { left: auto; right: 0; transform: none; }
 
 @media (prefers-color-scheme: dark) {
     :root {

@@ -52,6 +52,14 @@ async fn summary() -> Result<Vec<Row>> {
     Ok(rows)
 }
 
+/// A probe time as a reader on Paris time reads it.
+fn clock(at: &str) -> String {
+    match at.parse::<chrono::DateTime<chrono::Utc>>() {
+        Ok(t) => t.with_timezone(&chrono_tz::Europe::Paris).format("%H:%M").to_string(),
+        Err(_) => at.to_string(),
+    }
+}
+
 #[component]
 async fn strip(checks: Vec<Check>) -> Result {
     // Oldest on the left, as a timeline reads.
@@ -59,8 +67,9 @@ async fn strip(checks: Vec<Check>) -> Result {
     view! {
         <div class="strip">
             for check in bars {
-                <span class=(if check.ok == 1 { "bar up" } else { "bar down" })
-                      title=(format!("{} — {} ms", check.at, check.latency_ms))></span>
+                <span class=(if check.ok == 1 { "bar up" } else { "bar down" })>
+                    <span class="tip">(clock(&check.at))</span>
+                </span>
             }
         </div>
     }
