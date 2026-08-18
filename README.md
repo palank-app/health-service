@@ -50,9 +50,27 @@ wrangler d1 execute DB --remote --file migrations/001_schema.sql
 wrangler deploy
 ```
 
-Point `CONFIG` at the configuration database in `wrangler.toml`, and set
-`SITE_NAME` there to whatever the page should call itself. Cloudflare runs
-the sweep every five minutes.
+Point `CONFIG` at the configuration database in `wrangler.toml`, then fill
+its `settings` table — `site_name` is what the page calls itself.
+Cloudflare runs the sweep every five minutes.
+
+## Alerts
+
+A target that changes state — up to down, or back — sends one email, once.
+A service down since yesterday stays quiet, and a target probed for the
+first time announces nothing.
+
+Three rows in `settings` drive it, and nothing else:
+
+```sql
+update settings set value = '1'                   where key = 'email_alerts_enabled';
+update settings set value = 'status@example.com'  where key = 'email_alert_sender';
+update settings set value = 'ops@example.com'     where key = 'email_alert_recipient';
+```
+
+Cloudflare accepts a sender only on a domain the account routes email for,
+and a recipient it has verified. With either address empty, or the flag
+off, the sweep records as usual and says nothing.
 
 ## Choices worth knowing
 

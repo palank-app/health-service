@@ -1,6 +1,7 @@
 //! A status page that runs nowhere: the pages, the prober and the store
 //! are one Worker, its two D1 bindings and a cron trigger.
 
+pub mod alert;
 pub mod app;
 pub mod db;
 pub mod probe;
@@ -61,7 +62,18 @@ async fn tick(event: ScheduledEvent, env: Env, _ctx: ScheduleContext) {
         return;
     }
 
-    match probe::sweep().await {
+    let settings = match db::settings().await {
+        Ok(settings) => settings,
+        Err(e) => {
+            console_log!("cron {}: settings unreadable: {e}", event.cron());
+            return;
+        }
+    };
+    // An absent binding is not a failure: a deployment that never wants an
+    // email simply does not declare one.
+    let email = env.send_email("EMAIL").ok();
+
+    match probe::sweep(&settings, email.as_ref()).await {
         Ok((healthy, probed)) => console_log!("cron {}: {healthy}/{probed} up", event.cron()),
         Err(e) => console_log!("cron {}: sweep failed: {e}", event.cron()),
     }

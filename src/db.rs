@@ -47,20 +47,53 @@ pub fn install(env: &worker::Env) -> Result<(), Error> {
     Ok(())
 }
 
-/// What the page calls itself, from the configuration database.
-pub fn site_name() -> impl std::future::Future<Output = Result<String, Error>> + Send {
+/// Every row of the settings table, as a key to value map.
+pub fn settings() -> impl std::future::Future<Output = Result<Settings, Error>> + Send {
     bridge(async move {
         #[derive(Deserialize)]
         struct Row {
+            key: String,
             value: String,
         }
-        let found: Option<Row> = config()
-            .prepare("select value from settings where key = 'site_name'")
-            .first(None)
+        let rows: Vec<Row> = config()
+            .prepare("select key, value from settings")
+            .all()
             .await
+            .map_err(err)?
+            .results()
             .map_err(err)?;
-        Ok(found.map_or_else(|| "État des services".to_string(), |row| row.value))
+        Ok(Settings(rows.into_iter().map(|row| (row.key, row.value)).collect()))
     })
+}
+
+/// The settings table, read once per invocation.
+pub struct Settings(std::collections::HashMap<String, String>);
+
+impl Settings {
+    fn get(&self, key: &str) -> &str {
+        self.0.get(key).map_or("", String::as_str)
+    }
+
+    /// What the page calls itself.
+    pub fn site_name(&self) -> &str {
+        match self.get("site_name") {
+            "" => "État des services",
+            name => name,
+        }
+    }
+
+    /// Where a state change is announced, when it is announced at all.
+    /// Both addresses have to be there: the sender must sit on a domain
+    /// the account routes email for, and the recipient must be verified.
+    pub fn alert_addresses(&self) -> Option<(&str, &str)> {
+        if self.get("email_alerts_enabled") != "1" {
+            return None;
+        }
+        match (self.get("email_alert_sender"), self.get("email_alert_recipient")) {
+            ("", _) | (_, "") => None,
+            (from, to) => Some((from, to)),
+        }
+    }
 }
 
 fn history() -> Rc<D1Database> {
@@ -128,6 +161,26 @@ pub fn history_of(
             .map_err(err)?
             .results::<Check>()
             .map_err(err)
+    })
+}
+
+/// Whether the last probe of a target answered as expected, or nothing
+/// when it has never been probed.
+pub fn last_state(slug: &str) -> impl std::future::Future<Output = Result<Option<bool>, Error>> + Send {
+    let args = vec![s(slug)];
+    bridge(async move {
+        #[derive(Deserialize)]
+        struct Row {
+            ok: i64,
+        }
+        let found: Option<Row> = history()
+            .prepare("select ok from checks where slug = ?1 order by at desc limit 1")
+            .bind(&args)
+            .map_err(err)?
+            .first(None)
+            .await
+            .map_err(err)?;
+        Ok(found.map(|row| row.ok == 1))
     })
 }
 

@@ -69,7 +69,7 @@ async fn strip(checks: Vec<Check>) -> Result {
 #[page("/")]
 async fn status(_cx: &Cx) -> Result {
     let rows = summary().await?;
-    let title = db::site_name().await?;
+    let title = db::settings().await?.site_name().to_string();
     let all_up = rows.iter().all(|r| r.up() == Some(true));
     let any_known = rows.iter().any(|r| r.up().is_some());
 

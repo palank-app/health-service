@@ -26,6 +26,13 @@ database_id = "a9e3c451-8a96-4b01-8697-1a5d01a54e19"
 [triggers]
 crons = ["*/5 * * * *"]
 
+# Alerts on a state change. No destination is pinned here: the addresses
+# belong to the deployment and live in the settings table, and Cloudflare
+# only accepts a recipient the account has verified anyway. Remove this
+# block and the sweep simply stops announcing.
+[[send_email]]
+name = "EMAIL"
+
 # The stylesheet. A request matching a file here never reaches the Worker.
 [assets]
 directory = "public"
