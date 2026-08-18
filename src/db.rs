@@ -82,6 +82,14 @@ impl Settings {
         }
     }
 
+    /// What an announcement signs itself with.
+    pub fn sender_name(&self) -> &str {
+        match self.get("alert_sender_name") {
+            "" => "Supervision",
+            name => name,
+        }
+    }
+
     /// Where a state change is announced, when it is announced at all.
     /// Both addresses have to be there: the sender must sit on a domain
     /// the account routes email for, and the recipient must be verified.

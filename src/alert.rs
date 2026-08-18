@@ -50,6 +50,8 @@ impl Change<'_> {
 pub struct Announcer {
     email: Option<(SendEmail, String, String)>,
     webhook: Option<String>,
+    /// What both channels sign with.
+    from_name: String,
 }
 
 impl Announcer {
@@ -62,7 +64,7 @@ impl Announcer {
             })
         });
         let webhook = env.secret("ALERT_WEBHOOK").ok().map(|url| url.to_string());
-        Self { email, webhook }
+        Self { email, webhook, from_name: settings.sender_name().to_string() }
     }
 
     pub fn is_silent(&self) -> bool {
@@ -74,11 +76,11 @@ impl Announcer {
     pub async fn announce(&self, change: &Change<'_>) -> Vec<Error> {
         let mut failures = Vec::new();
         if let Some((binding, from, to)) = &self.email
-            && let Err(e) = send_email(binding, from, to, change).await {
+            && let Err(e) = send_email(binding, &self.from_name, from, to, change).await {
                 failures.push(e);
             }
         if let Some(url) = &self.webhook
-            && let Err(e) = post_webhook(url, change).await {
+            && let Err(e) = post_webhook(url, &self.from_name, change).await {
                 failures.push(e);
             }
         failures
@@ -87,11 +89,12 @@ impl Announcer {
 
 async fn send_email(
     binding: &SendEmail,
+    from_name: &str,
     from: &str,
     to: &str,
     change: &Change<'_>,
 ) -> Result<(), Error> {
-    let sender = EmailAddress::new("Supervision", from);
+    let sender = EmailAddress::new(from_name, from);
     let message = SendEmailBuilder::builder_with_email_address_and_str(&sender, to, &change.subject())
         .text(&format!("{}\n", change.detail()))
         .build();
@@ -104,9 +107,9 @@ async fn send_email(
 }
 
 /// One incoming webhook, in the Slack payload shape.
-async fn post_webhook(url: &str, change: &Change<'_>) -> Result<(), Error> {
+async fn post_webhook(url: &str, from_name: &str, change: &Change<'_>) -> Result<(), Error> {
     let payload = json!({
-        "username": "Supervision",
+        "username": from_name,
         "attachments": [{
             "color": change.colour(),
             "fallback": change.subject(),

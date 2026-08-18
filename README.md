@@ -62,6 +62,8 @@ first time announces nothing.
 
 Two channels, either or both, and neither is required.
 
+Both sign with `alert_sender_name` from the settings table.
+
 **A webhook**, in the payload shape Slack introduced and Mattermost,
 Rocket.Chat and others accept unchanged. The URL is a credential — anyone
 holding it can post to the channel — so it lives as a secret rather than
