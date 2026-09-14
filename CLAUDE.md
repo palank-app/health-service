@@ -1,5 +1,44 @@
 # health-service
 
+> ## House rules
+>
+> **English in the code.** Comments, doc comments, log and error messages,
+> identifiers and test names are English. French in any of them is a bug:
+> translate it. There are two exceptions, and only two.
+>
+> - **Copy a user reads stays French.** The product speaks French to its
+>   users. Labels, buttons, toasts, page text, e-mail bodies and messages
+>   returned to a client are French. Never translate them.
+> - **French legal and administrative terms with no clean English
+>   equivalent** stay French: `mandat`, `dirigeants`, `bâti`, `non bâti`,
+>   `siège`, `personne morale`, `représentant`, `procédures collectives`,
+>   `loi Hoguet`.
+>
+> A French word is not a domain term just because the feature is French.
+> `veille` became `watch`, because English has the word.
+>
+> **A French word keeps its accents.** In comments, in strings and in data:
+> `2e étage`, never `2e etage`. Stripping an accent damages the word. It
+> does not translate it.
+>
+> **A commit message is pure ASCII.** An accent in a commit body gets the
+> commit rejected.
+>
+> **No decoration in a comment.** No em dash, guillemet, arrow, box-drawing
+> rule or emoji. Write `--`, `"` and `->`.
+>
+> **Write to ASD-STE100** (Simplified Technical English):
+>
+> - Simple present tense, active voice.
+> - One idea per sentence, 20 words at most.
+> - Common concrete words. One word keeps one meaning across the repo.
+> - Keep the articles. No noun cluster longer than three words.
+>
+> **A comment carries the WHY.** One line by default. State the fact and what
+> breaks without it. Delete, do not rewrite, a comment that restates the code,
+> narrates history ("used to", "now"), carries a ticket id, or documents a
+> function's callers. The reason for a change belongs in the commit message.
+
 A public status page that runs as a Cloudflare Worker and nothing else: no
 container, no Postgres, no host.
 
