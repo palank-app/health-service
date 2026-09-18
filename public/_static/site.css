@@ -61,6 +61,9 @@ h1 {
 .service {
     display: grid;
     grid-template-columns: minmax(0, max-content);
+    /* The rule is drawn on this box, so it stops where the strip does. */
+    width: max-content;
+    max-width: 100%;
     padding: 1rem 0;
     border-top: 1px solid var(--line);
 }
