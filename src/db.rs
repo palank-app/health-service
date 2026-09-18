@@ -32,6 +32,12 @@ pub struct Check {
     pub status: Option<i64>,
     pub latency_ms: i64,
     pub ok: i64,
+    /// What the target said about its own build. Null for a target that
+    /// answers something other than a Palank health payload.
+    #[serde(default)]
+    pub sha: Option<String>,
+    #[serde(default)]
+    pub age: Option<i64>,
 }
 
 thread_local! {
@@ -159,7 +165,7 @@ pub fn history_of(
     bridge(async move {
         history()
             .prepare(
-                "select at, status, latency_ms, ok from checks \
+                "select at, status, latency_ms, ok, sha, age from checks \
                  where slug = ?1 order by at desc limit ?2",
             )
             .bind(&args)
@@ -179,6 +185,7 @@ pub fn record(
     status: Option<i64>,
     latency_ms: i64,
     ok: bool,
+    build: &crate::probe::Build,
 ) -> impl std::future::Future<Output = Result<(), Error>> + Send {
     let args = vec![
         s(slug),
@@ -186,12 +193,14 @@ pub fn record(
         status.map_or(JsValue::NULL, n),
         n(latency_ms),
         n(i64::from(ok)),
+        build.sha.as_deref().map_or(JsValue::NULL, s),
+        build.age.map_or(JsValue::NULL, n),
     ];
     bridge(async move {
         history()
             .prepare(
-                "insert into checks (slug, at, status, latency_ms, ok) \
-                 values (?1, ?2, ?3, ?4, ?5)",
+                "insert into checks (slug, at, status, latency_ms, ok, sha, age) \
+                 values (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
             )
             .bind(&args)
             .map_err(err)?

@@ -38,6 +38,32 @@ impl Row {
     fn latency(&self) -> Option<i64> {
         self.checks.first().map(|c| c.latency_ms)
     }
+
+    /// The build the target reported on the last probe.
+    fn commit(&self) -> Option<&str> {
+        self.checks.first()?.sha.as_deref()
+    }
+
+    /// Seconds since the target's process started, on the last probe.
+    fn age(&self) -> Option<i64> {
+        self.checks.first()?.age
+    }
+}
+
+/// An age a reader takes in at a glance. The largest unit alone is enough
+/// to tell a long-running service from one that just restarted.
+fn since(seconds: i64) -> String {
+    let minutes = seconds / 60;
+    let hours = minutes / 60;
+    let days = hours / 24;
+
+    if days > 0 {
+        format!("{days} j")
+    } else if hours > 0 {
+        format!("{hours} h")
+    } else {
+        format!("{minutes} min")
+    }
 }
 
 async fn summary() -> Result<Vec<Row>> {
@@ -115,6 +141,14 @@ async fn status(_cx: &Cx) -> Result {
                                         None => "dot unknown",
                                     })></span>
                                     <span class="name">(&row.name)</span>
+                                    <span class="build">
+                                        if let Some(commit) = row.commit() {
+                                            <span class="commit">(commit)</span>
+                                        }
+                                        if let Some(age) = row.age() {
+                                            <span class="age">(since(age))</span>
+                                        }
+                                    </span>
                                     <span class="numbers">
                                         if let Some(uptime) = row.uptime() {
                                             (format!("{uptime:.1} %"))
@@ -149,6 +183,10 @@ struct Reported {
     up: Option<bool>,
     uptime: Option<f64>,
     latency_ms: Option<i64>,
+    commit: Option<String>,
+    /// Seconds since the service started. Not `uptime`: that field is the
+    /// share of probes that passed.
+    age_s: Option<i64>,
 }
 
 /// The same summary, for whatever polls it.
@@ -161,6 +199,8 @@ async fn api(_cx: &Cx) -> Result<Json> {
             up: row.up(),
             uptime: row.uptime().map(|u| (u * 10.0).round() / 10.0),
             latency_ms: row.latency(),
+            commit: row.commit().map(str::to_owned),
+            age_s: row.age(),
             slug: row.slug,
             name: row.name,
         })

@@ -85,11 +85,44 @@ h1 {
     font-weight: 500;
 }
 
-.numbers {
+/* What the service says about itself. It sits left of the percentage and
+   reads quieter than it, because it is context and not the verdict. */
+.build {
     margin-left: auto;
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    color: var(--muted);
+    font-size: 0.75rem;
+    opacity: 0.75;
+}
+
+.commit {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.age {
+    font-variant-numeric: tabular-nums;
+}
+
+.numbers {
+    margin-left: 0.9rem;
     color: var(--muted);
     font-variant-numeric: tabular-nums;
     font-size: 0.85rem;
+}
+
+/* Below 30rem the build drops out: the name, the dot and the percentage
+   are what a phone reader needs. */
+@media (max-width: 30rem) {
+    .build {
+        display: none;
+    }
+
+    /* The percentage takes back the push the build was giving it. */
+    .numbers {
+        margin-left: auto;
+    }
 }
 
 /* One bar per probe, oldest on the left. The strip scrolls rather than
