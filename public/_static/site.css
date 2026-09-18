@@ -55,7 +55,12 @@ h1 {
     list-style: none;
 }
 
+/* The head and the strip share one column, sized to the strip, so the
+   percentage ends where the last bar ends. The column can still shrink,
+   or a narrow screen would push the strip off instead of scrolling it. */
 .service {
+    display: grid;
+    grid-template-columns: minmax(0, max-content);
     padding: 1rem 0;
     border-top: 1px solid var(--line);
 }
