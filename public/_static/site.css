@@ -200,6 +200,13 @@ h1 {
 .bar.up { background: var(--up); }
 .bar.down { background: var(--down); }
 
+/* Placeholder for a target watched less than a full strip. Transparent,
+   not --unknown: that colour already means a probe ran and got no
+   answer, and no probe ran here yet. */
+.bar.pad {
+    background: transparent;
+}
+
 .tip {
     position: absolute;
     bottom: calc(100% + 0.3rem);

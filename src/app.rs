@@ -88,10 +88,17 @@ fn clock(at: &str) -> String {
 
 #[component]
 async fn strip(checks: Vec<Check>) -> Result {
-    // Oldest on the left, as a timeline reads.
+    // Oldest on the left, as a timeline reads. A target with fewer than
+    // STRIP checks -- newly watched -- pads the front with empty slots, so
+    // every strip is the same width and the newest probe sits at the same
+    // right edge as a full one.
     let bars: Vec<&Check> = checks.iter().rev().collect();
+    let padding = STRIP as usize - bars.len();
     view! {
         <div class="strip">
+            for _ in 0..padding {
+                <span class="bar pad"></span>
+            }
             for check in bars {
                 <span class=(if check.ok == 1 { "bar up" } else { "bar down" })>
                     <span class="tip">(clock(&check.at))</span>
