@@ -160,6 +160,7 @@ async fn status(_cx: &Cx) -> Result {
                         }
                     </ul>
                 </main>
+                <script src="/_static/matrix-hover.js"></script>
             </body>
         </html>
     }

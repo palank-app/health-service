@@ -24,9 +24,51 @@ body {
     font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
+/* The pointer trail is painted behind the page. The body is the container
+   the effect listens on, so it has to establish a positioning context. */
+body {
+    position: relative;
+}
+
+.matrix-hover-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+}
+
 main {
+    position: relative;
+    z-index: 1;
     margin: 0 auto;
-    max-width: 46rem;
+    /* Sized to the rows, which are sized to their strip. The banner then
+       ends where the bars do, and so does the layer behind the content. */
+    width: max-content;
+    max-width: min(46rem, 100%);
+}
+
+/* The reading area keeps its own ground, or the trail crosses the text and
+   the page stops being a status page. The layer bleeds past the content and
+   fades over that bleed, so the trail thins out instead of meeting an edge.
+   Solid from the content box inwards: each fade is as wide as its bleed. */
+main::before {
+    content: "";
+    position: absolute;
+    inset: -3rem -4rem;
+    z-index: -1;
+    background: var(--ground);
+    mask-image:
+        linear-gradient(to right, transparent 0, black 4rem, black calc(100% - 4rem), transparent 100%),
+        linear-gradient(to bottom, transparent 0, black 3rem, black calc(100% - 3rem), transparent 100%);
+    -webkit-mask-image:
+        linear-gradient(to right, transparent 0, black 4rem, black calc(100% - 4rem), transparent 100%),
+        linear-gradient(to bottom, transparent 0, black 3rem, black calc(100% - 3rem), transparent 100%);
+    /* Both gradients have to agree for a pixel to show, or the corners stay
+       opaque and the layer reads as a rectangle. */
+    mask-composite: intersect;
+    -webkit-mask-composite: source-in;
 }
 
 h1 {
